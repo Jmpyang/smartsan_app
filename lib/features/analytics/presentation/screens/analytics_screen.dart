@@ -39,7 +39,7 @@ class AnalyticsScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // 1. Key Performance Indicators (KPIs)
-            _buildKeyMetricsGrid(),
+            _buildKeyMetricsGrid(context),
             const SizedBox(height: 24),
 
             // 2. Monthly Performance Trends
@@ -66,14 +66,17 @@ class AnalyticsScreen extends StatelessWidget {
   
  //Key metrics grid
 
-  Widget _buildKeyMetricsGrid() {
+  Widget _buildKeyMetricsGrid(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final int axisCount = (screenWidth > 600) ? 4 : 2;
     return GridView.count(
-      crossAxisCount: 4, // 4 columns as seen in the wide web view (analytics.png)
+      crossAxisCount: axisCount, // 4 columns as seen in the wide web view (analytics.png)
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
-      childAspectRatio: 1.5, // Adjust card height/width ratio
+      childAspectRatio: (axisCount == 4) ? 1.5 : 1.2,
+      //childAspectRatio: aspectRatio,  // Now dynamic
       children: [
         _MetricCard(
           title: 'Waste Reduction',
