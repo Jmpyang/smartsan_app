@@ -73,6 +73,7 @@ class _DashBoardPage extends State<DashboardPage> {
               title: Text("Report Issue"),
               onTap: (){
               Navigator.pop(context);
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const CommunityApp()));
               },
             ),
             ListTile(

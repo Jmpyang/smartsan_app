@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:smartsan_app/app.dart';
+import 'package:smartsan_app/features/community_reporting/presentation/report_issue_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -79,6 +80,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       ElevatedButton(onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => CommunityApp()));
                       },
                         child: Text("Report an Issue"),
                         style: ElevatedButton.styleFrom(
@@ -133,7 +135,9 @@ class _HomePageState extends State<HomePage> {
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16),
                   ),
-                  ElevatedButton.icon(onPressed: (){}, label: Text("Get Started Now"),
+                  ElevatedButton.icon(onPressed: (){
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => DashBoard()));
+                  }, label: Text("Get Started Now"),
                     icon: Icon(Icons.arrow_forward),
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF2279CF),
