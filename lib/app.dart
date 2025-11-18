@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:smartsan_app/features/community_reporting/presentation/report_issue_view.dart';
 import 'package:smartsan_app/main.dart';
 import 'package:smartsan_app/features/workers/presentation/screens/workers_dashboard_screen.dart';
 import 'package:smartsan_app/features/analytics/presentation/screens/analytics_screen.dart';
@@ -59,6 +60,9 @@ class _DashBoardPage extends State<DashboardPage>{
               title: Text("Report Issue"),
               onTap: (){
               Navigator.pop(context);
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const ReportIssuePage())
+              );
               },
             ),
             ListTile(trailing: Icon(Icons.work),
