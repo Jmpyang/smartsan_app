@@ -78,8 +78,9 @@ class _HomePageState extends State<HomePage> {
                             backgroundColor: const Color(0xFF338E46)
                         ),
                       ),
-                      ElevatedButton(onPressed: () {}
-                        , child: Text("Report an Issue"),
+                      ElevatedButton(onPressed: () {
+                      },
+                        child: Text("Report an Issue"),
                         style: ElevatedButton.styleFrom(
                             foregroundColor: Colors.white,
                             backgroundColor: const Color(0xFF2279CF)
