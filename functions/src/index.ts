@@ -16,3 +16,10 @@ export { updateTaskStatus } from './workers/worker.service';
 export { nightlyKpiUpdate } from './analytics/analytics.scheduled';
 
 // --- (You would add functions for User Roles/Auth and other features here) ---
+export { 
+    onReportCreate,
+    onReportUpdate 
+} from './reports/report.triggers';
+
+export { assignRole } from './auth/auth.routes';
+

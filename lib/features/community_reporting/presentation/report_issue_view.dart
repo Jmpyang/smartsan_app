@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smartsan_app/app.dart';
 import 'package:smartsan_app/main.dart';
+import 'dart:io';
+import 'package:smartsan_app/services/report_service.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart'; // Import for kIsWeb check and platform-specific file handling
 
 void main() {
   runApp(const CommunityApp());
@@ -84,8 +88,13 @@ class ReportIssuePage extends StatefulWidget {
 }
 
 class _ReportIssuePageState extends State<ReportIssuePage> {
+  // Service instance
+  final ReportService _reportService = ReportService();
+  
+  // State variables
   final ImagePicker _picker = ImagePicker();
   List<XFile> _selectedImages = [];
+  bool _isLoading = false;
 
   String? _selectedCategory;
   String? _selectedPriority;
@@ -100,12 +109,6 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     'Other': 'Other issues',
   };
 
-  // final Map<String, String> _priorities = {
-  //   'Low': 'Can wait',
-  //   'Medium': 'Address soon',
-  //   'High': 'Urgent',
-  // };
-
   final List<String> _prioritiesList = [
     "Low - Can wait",
     "Medium - Address soon",
@@ -113,8 +116,47 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
 
   ];
 
+  // --- NEW: Image Upload Function ---
+  Future<String?> _uploadImageToStorage(XFile file) async {
+    try {
+      final storageRef = FirebaseStorage.instance.ref();
+      
+      // Create a unique path for the image (e.g., reports/timestamp_filename)
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.name}';
+      final imageRef = storageRef.child('reports/$fileName');
+
+      // Platform specific upload: web uses bytes, mobile/desktop uses file path
+      SettableMetadata? metadata;
+      UploadTask uploadTask;
+
+      if (kIsWeb) {
+        final bytes = await file.readAsBytes();
+        metadata = SettableMetadata(contentType: file.mimeType);
+        uploadTask = imageRef.putData(bytes, metadata);
+      } else {
+        uploadTask = imageRef.putFile(File(file.path));
+      }
+
+      final snapshot = await uploadTask;
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+      
+      return downloadUrl;
+
+    } on FirebaseException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Image upload failed: ${e.message}')),
+        );
+      }
+      return null;
+    }
+  }
+  
+  // --- EXISTING: Image Picker ---
   Future<void> _pickImage() async {
     try {
+      // NOTE: This existing logic only allows one image at a time, but the list supports multiple.
+      // We will only upload the *first* selected image in the submit logic for now.
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 1920,
@@ -123,13 +165,16 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
       );
       if (image != null) {
         setState(() {
+          _selectedImages.clear(); // Clear old ones if only one is allowed
           _selectedImages.add(image);
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick image: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to pick image: $e')),
+        );
+      }
     }
   }
 
@@ -139,20 +184,85 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     });
   }
 
-  void _submitReport() {
-    if (_selectedCategory == null || _selectedPriority == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select category and priority')),
-      );
+  // --- NEW: Report Submission Logic ---
+  void _submitReport() async {
+    // 1. Basic validation
+    if (_selectedCategory == null || _selectedPriority == null || _selectedImages.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select category, priority, and at least one photo.')),
+        );
+      }
+      return;
+    }
+    
+    if (_locationController.text.trim().isEmpty || _descriptionController.text.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please fill in the location and description.')),
+        );
+      }
       return;
     }
 
-    // Here you would typically send the report to your backend
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 2. Upload the primary image
+      final imageUrl = await _uploadImageToStorage(_selectedImages.first);
+      
+      if (imageUrl == null) {
+        // Image upload failed, error already shown
+        return;
+      }
+
+      // 3. Extract data for Cloud Function
+      final priority = _selectedPriority!.split(' - ').first; // Extracts "Low", "Medium", or "High"
+      
+      // NOTE: Replace these placeholder coordinates with actual location data from a geolocation package
+      const double placeholderLat = 34.0522; 
+      const double placeholderLng = -118.2437; 
+      
+      // Call the Report Service, which executes the 'submitReport' Cloud Function
+      await _reportService.submitReport(
+        description: _descriptionController.text.trim(),
+        category: _selectedCategory!, // You need to update ReportService to accept category
+        priority: priority, // You need to update ReportService to accept priority
+        imageUrl: imageUrl,
+        locationString: _locationController.text.trim(), // You need to update ReportService to accept locationString
+        lat: placeholderLat, 
+        lng: placeholderLng,
+      );
+
+      // 4. Success handling
+      _showSubmissionSuccessDialog();
+
+    } catch (e) {
+      // 5. Error handling
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Submission failed. Check your network or permissions.')),
+        );
+      }
+    } finally {
+      // 6. Reset loading state
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // Helper method to show success dialog and clear the form
+  void _showSubmissionSuccessDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Report Submitted'),
-        content: const Text('Thank you for helping keep your community clean!'),
+        content: const Text('Thank you! Your report is being processed for AI prioritization.'),
         actions: [
           TextButton(
             onPressed: () {
@@ -178,7 +288,8 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => DashBoard()));
+          // NOTE: Ensure 'DashBoard()' is correctly imported and available.
+          Navigator.push(context, MaterialPageRoute(builder: (context) => DashBoard())); 
         }, icon: Icon(Icons.arrow_back)),
         title: const Text('Report an Issue'),
         backgroundColor: Colors.green,
@@ -312,7 +423,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
             ),
             const SizedBox(height: 8),
             GestureDetector(
-              onTap: _pickImage,
+              onTap: _isLoading ? null : _pickImage,
               child: Container(
                 width: double.infinity,
                 height: 120,
@@ -356,8 +467,11 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                         height: 80,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
+                          // Use FileImage for mobile/desktop, or NetworkImage for web after upload
                           image: DecorationImage(
-                            image: NetworkImage(image.path), // Use FileImage for actual files
+                            image: kIsWeb
+                                ? NetworkImage(image.path) as ImageProvider<Object>
+                                : FileImage(File(image.path)),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -386,7 +500,8 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _submitReport,
+                // Disable button when loading
+                onPressed: _isLoading ? null : _submitReport,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
@@ -395,10 +510,19 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
-                  'Submit Report',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20, 
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 3,
+                        ),
+                      )
+                    : const Text(
+                        'Submit Report',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
               ),
             ),
           ],
