@@ -48,7 +48,8 @@ class _HomePageState extends State<HomePage> {
                       padding: const EdgeInsets.all(12.0),
                       child: Text(
                         "Sustainable Sanitization Management",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -70,7 +71,8 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       ElevatedButton.icon(
                         onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => DashBoard()));
+                          Navigator.push(context, MaterialPageRoute(
+                              builder: (context) => DashBoard()));
                         },
                         label: const Text("View Dashboard"),
                         icon: const Icon(Icons.arrow_forward),
@@ -80,7 +82,8 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       ElevatedButton(onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => CommunityApp()));
+                        Navigator.push(context, MaterialPageRoute(
+                            builder: (context) => CommunityApp()));
                       },
                         child: Text("Report an Issue"),
                         style: ElevatedButton.styleFrom(
@@ -120,31 +123,45 @@ class _HomePageState extends State<HomePage> {
             ),
 
 
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  const Text(
-                    "Ready to Transform Your Community?",
-                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Join thousands of communities already making a difference with SmartSan",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  ElevatedButton.icon(onPressed: (){}, label: Text("Get Started Now"),
-                    icon: Icon(Icons.arrow_forward),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF2279CF),
-                        foregroundColor: Colors.white
-                    ),
-                  )
-                ],
-              ),
+      Container(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const Text(
+              "Ready to Transform Your Community?",
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 16),
+            const Text(
+              "Join thousands of communities already making a difference with SmartSan",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+            ElevatedButton.icon(onPressed: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => DashBoard()));
+            },
+              label: Text("Get Started Now"),
+              icon: Icon(Icons.arrow_forward),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF2279CF),
+                  foregroundColor: Colors.white
+              ),
+            )
+          ],
+        ),
+      ),
+            //const Spacer(),
+
+            _buildCopyrightBar(),
+
+          ],
+        ),
+      ),
+    );
+  }
+
 
 
             // Container(
@@ -232,13 +249,6 @@ class _HomePageState extends State<HomePage> {
             // ),
 
 
-          ],
-        ),
-      ),
-    );
-  }
-
-
   Widget _buildStatCard(String value, String label) {
     return Card(
       elevation: 2,
@@ -257,6 +267,50 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureCheck(String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.check_circle_outline, size: 18, color: Colors.white),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCopyrightBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      color: Colors.white,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.eco, color: Color(0xFF62B570)),
+              const SizedBox(width: 4),
+              const Text(
+                "SmartSan",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF333333),
+                ),
+              ),
+            ],
+          ),
+          const Text(
+            "© 2025 SmartSan. Building sustainable communities worldwide.",
+            style: TextStyle(fontSize: 10, color: Color(0xFF666666)),
+          ),
+        ],
       ),
     );
   }
