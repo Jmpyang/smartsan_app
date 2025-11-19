@@ -141,9 +141,10 @@ class AnalyticsScreen extends StatelessWidget {
             width: 40,
             child: Text(month, style: _bodyText1),
           ),
-          const SizedBox(width: 16),
+          const Spacer(flex: 1),
           // Waste Trend (Blue Bar)
           Expanded(
+            flex: 8,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -157,9 +158,10 @@ class AnalyticsScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
           // Efficiency Trend (Green Bar)
           Expanded(
+            flex: 8,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
