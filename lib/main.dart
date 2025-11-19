@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:smartsan_app/app.dart';
+import 'package:smartsan_app/features/community_reporting/presentation/report_issue_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -79,6 +80,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       ElevatedButton(onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => CommunityApp()));
                       },
                         child: Text("Report an Issue"),
                         style: ElevatedButton.styleFrom(

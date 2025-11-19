@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:smartsan_app/app.dart';
+import 'package:smartsan_app/main.dart';
 
 void main() {
   runApp(const CommunityApp());
@@ -98,11 +100,18 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     'Other': 'Other issues',
   };
 
-  final Map<String, String> _priorities = {
-    'Low': 'Can wait',
-    'Medium': 'Address soon',
-    'High': 'Urgent',
-  };
+  // final Map<String, String> _priorities = {
+  //   'Low': 'Can wait',
+  //   'Medium': 'Address soon',
+  //   'High': 'Urgent',
+  // };
+
+  final List<String> _prioritiesList = [
+    "Low - Can wait",
+    "Medium - Address soon",
+    "High - Urgent"
+
+  ];
 
   Future<void> _pickImage() async {
     try {
@@ -168,6 +177,9 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => DashBoard()));
+        }, icon: Icon(Icons.arrow_back)),
         title: const Text('Report an Issue'),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
@@ -273,21 +285,14 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              items: _priorities.entries.map((entry) {
+              items: _prioritiesList.map((item) {
                 return DropdownMenuItem(
-                  value: entry.key,
+                  value: item,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(entry.key),
-                      Text(
-                        entry.value,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
+                      Text(item),
                     ],
                   ),
                 );
