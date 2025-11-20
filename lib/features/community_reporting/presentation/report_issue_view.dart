@@ -5,9 +5,21 @@ import 'package:smartsan_app/main.dart';
 import 'dart:io';
 import 'package:smartsan_app/services/report_service.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/foundation.dart'; // Import for kIsWeb check and platform-specific file handling
+import 'package:flutter/foundation.dart'; // For kIsWeb check and platform-specific file handling
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart'; // NEW: Firebase App Check
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
+  // --- NEW: Enable Firebase App Check in debug mode ---
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.debug,
+    appleProvider: AppleProvider.debug,
+    webRecaptchaSiteKey: 'your-web-key', // Replace with your actual web key
+  );
+
   runApp(const CommunityApp());
 }
 
@@ -90,7 +102,7 @@ class ReportIssuePage extends StatefulWidget {
 class _ReportIssuePageState extends State<ReportIssuePage> {
   // Service instance
   final ReportService _reportService = ReportService();
-  
+
   // State variables
   final ImagePicker _picker = ImagePicker();
   List<XFile> _selectedImages = [];
@@ -113,25 +125,21 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     "Low - Can wait",
     "Medium - Address soon",
     "High - Urgent"
-
   ];
 
-  // --- NEW: Image Upload Function ---
+  // --- NEW: Image Upload Function (with web fix and error handling) ---
   Future<String?> _uploadImageToStorage(XFile file) async {
     try {
       final storageRef = FirebaseStorage.instance.ref();
-      
-      // Create a unique path for the image (e.g., reports/timestamp_filename)
       final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.name}';
       final imageRef = storageRef.child('reports/$fileName');
 
-      // Platform specific upload: web uses bytes, mobile/desktop uses file path
-      SettableMetadata? metadata;
       UploadTask uploadTask;
+      SettableMetadata? metadata;
 
       if (kIsWeb) {
         final bytes = await file.readAsBytes();
-        metadata = SettableMetadata(contentType: file.mimeType);
+        metadata = SettableMetadata(contentType: 'image/jpeg');
         uploadTask = imageRef.putData(bytes, metadata);
       } else {
         uploadTask = imageRef.putFile(File(file.path));
@@ -139,9 +147,8 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
 
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
-      
-      return downloadUrl;
 
+      return downloadUrl;
     } on FirebaseException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -151,12 +158,10 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
       return null;
     }
   }
-  
-  // --- EXISTING: Image Picker ---
+
+  // --- Image Picker ---
   Future<void> _pickImage() async {
     try {
-      // NOTE: This existing logic only allows one image at a time, but the list supports multiple.
-      // We will only upload the *first* selected image in the submit logic for now.
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 1920,
@@ -165,7 +170,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
       );
       if (image != null) {
         setState(() {
-          _selectedImages.clear(); // Clear old ones if only one is allowed
+          _selectedImages.clear();
           _selectedImages.add(image);
         });
       }
@@ -184,9 +189,8 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     });
   }
 
-  // --- NEW: Report Submission Logic ---
+  // --- Submit Report ---
   void _submitReport() async {
-    // 1. Basic validation
     if (_selectedCategory == null || _selectedPriority == null || _selectedImages.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -195,7 +199,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
       }
       return;
     }
-    
+
     if (_locationController.text.trim().isEmpty || _descriptionController.text.trim().isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -210,53 +214,36 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     });
 
     try {
-      // 2. Upload the primary image
       final imageUrl = await _uploadImageToStorage(_selectedImages.first);
-      
-      if (imageUrl == null) {
-        // Image upload failed, error already shown
-        return;
-      }
+      if (imageUrl == null) return;
 
-      // 3. Extract data for Cloud Function
-      final priority = _selectedPriority!.split(' - ').first; // Extracts "Low", "Medium", or "High"
-      
-      // NOTE: Replace these placeholder coordinates with actual location data from a geolocation package
-      const double placeholderLat = 34.0522; 
-      const double placeholderLng = -118.2437; 
-      
-      // Call the Report Service, which executes the 'submitReport' Cloud Function
+      final priority = _selectedPriority!.split(' - ').first;
+
+      const double placeholderLat = 34.0522;
+      const double placeholderLng = -118.2437;
+
       await _reportService.submitReport(
         description: _descriptionController.text.trim(),
-        category: _selectedCategory!, // You need to update ReportService to accept category
-        priority: priority, // You need to update ReportService to accept priority
+        category: _selectedCategory!,
+        priority: priority,
         imageUrl: imageUrl,
-        locationString: _locationController.text.trim(), // You need to update ReportService to accept locationString
-        lat: placeholderLat, 
+        locationString: _locationController.text.trim(),
+        lat: placeholderLat,
         lng: placeholderLng,
       );
 
-      // 4. Success handling
       _showSubmissionSuccessDialog();
-
     } catch (e) {
-      // 5. Error handling
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Submission failed. Check your network or permissions.')),
+          const SnackBar(content: Text('Submission failed. Check your network or permissions.')),
         );
       }
     } finally {
-      // 6. Reset loading state
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // Helper method to show success dialog and clear the form
   void _showSubmissionSuccessDialog() {
     showDialog(
       context: context,
@@ -267,7 +254,6 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              // Clear form
               setState(() {
                 _selectedCategory = null;
                 _selectedPriority = null;
@@ -287,10 +273,12 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: () {
-          // NOTE: Ensure 'DashBoard()' is correctly imported and available.
-          Navigator.push(context, MaterialPageRoute(builder: (context) => DashBoard())); 
-        }, icon: Icon(Icons.arrow_back)),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => DashBoard()));
+          },
+          icon: const Icon(Icons.arrow_back),
+        ),
         title: const Text('Report an Issue'),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
@@ -302,125 +290,66 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
           children: [
             const Text(
               'Help keep your community clean and earn rewards',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 24),
             const Text(
               'Submit a Report',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-
-            // Issue Category
-            const Text(
-              'Issue Category',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
+            const Text('Issue Category', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               value: _selectedCategory,
               decoration: InputDecoration(
                 hintText: 'Select category',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
               items: _categories.entries.map((entry) {
-                return DropdownMenuItem(
-                  value: entry.key,
-                  child: Text(entry.key),
-                );
+                return DropdownMenuItem(value: entry.key, child: Text(entry.key));
               }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedCategory = value;
-                });
-              },
+              onChanged: (value) => setState(() => _selectedCategory = value),
             ),
             const SizedBox(height: 20),
-
-            // Location
-            const Text(
-              'Location',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
+            const Text('Location', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: _locationController,
               decoration: InputDecoration(
                 hintText: 'Enter or select location',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 prefixIcon: const Icon(Icons.location_on),
               ),
             ),
             const SizedBox(height: 20),
-
-            // Description
-            const Text(
-              'Description',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
+            const Text('Description', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: _descriptionController,
               maxLines: 4,
               decoration: InputDecoration(
                 hintText: 'Describe the issue in detail...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 alignLabelWithHint: true,
               ),
             ),
             const SizedBox(height: 20),
-
-            // Priority Level
-            const Text(
-              'Priority Level',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
+            const Text('Priority Level', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               value: _selectedPriority,
               decoration: InputDecoration(
                 hintText: 'Select priority',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
               items: _prioritiesList.map((item) {
-                return DropdownMenuItem(
-                  value: item,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(item),
-                    ],
-                  ),
-                );
+                return DropdownMenuItem(value: item, child: Text(item));
               }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedPriority = value;
-                });
-              },
+              onChanged: (value) => setState(() => _selectedPriority = value),
             ),
             const SizedBox(height: 20),
-
-            // Add Photos
-            const Text(
-              'Add Photos (Optional)',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
+            const Text('Add Photos (Optional)', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             GestureDetector(
               onTap: _isLoading ? null : _pickImage,
@@ -437,21 +366,13 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                   children: [
                     Icon(Icons.cloud_upload, size: 40, color: Colors.grey[600]),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Click to upload or drag and drop',
-                      style: TextStyle(color: Colors.grey),
-                    ),
+                    const Text('Click to upload or drag and drop', style: TextStyle(color: Colors.grey)),
                     const SizedBox(height: 4),
-                    const Text(
-                      'PNG, JPG up to 10MB',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
+                    const Text('PNG, JPG up to 10MB', style: TextStyle(fontSize: 12, color: Colors.grey)),
                   ],
                 ),
               ),
             ),
-
-            // Selected Images
             if (_selectedImages.isNotEmpty) ...[
               const SizedBox(height: 16),
               Wrap(
@@ -467,7 +388,6 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                         height: 80,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
-                          // Use FileImage for mobile/desktop, or NetworkImage for web after upload
                           image: DecorationImage(
                             image: kIsWeb
                                 ? NetworkImage(image.path) as ImageProvider<Object>
@@ -493,36 +413,24 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                 }).toList(),
               ),
             ],
-
             const SizedBox(height: 32),
-
-            // Submit Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                // Disable button when loading
                 onPressed: _isLoading ? null : _submitReport,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 child: _isLoading
                     ? const SizedBox(
-                        height: 20, 
+                        height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 3,
-                        ),
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
                       )
-                    : const Text(
-                        'Submit Report',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
+                    : const Text('Submit Report', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -539,6 +447,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
   }
 }
 
+// ---------------- IMPACT PAGE ----------------
 class ImpactPage extends StatelessWidget {
   const ImpactPage({super.key});
 
@@ -555,47 +464,21 @@ class ImpactPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Total Points and Level
             Card(
               elevation: 4,
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    const Text(
-                      'Total Points',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
-                    ),
+                    const Text('Total Points', style: TextStyle(fontSize: 16, color: Colors.grey)),
                     const SizedBox(height: 8),
-                    Text(
-                      '245',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green[700],
-                      ),
-                    ),
+                    Text('245', style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.green[700])),
                     const SizedBox(height: 16),
-                    // Level Progress
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Level 3',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                        Text(
-                          '245/300',
-                          style: TextStyle(
-                            color: Colors.grey,
-                          ),
-                        ),
+                        Text('Level 3', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                        Text('245/300', style: TextStyle(color: Colors.grey)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -609,22 +492,13 @@ class ImpactPage extends StatelessWidget {
                     const SizedBox(height: 8),
                     const Align(
                       alignment: Alignment.centerRight,
-                      child: Text(
-                        '55 points to Level 4',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
+                      child: Text('55 points to Level 4', style: TextStyle(fontSize: 12, color: Colors.grey)),
                     ),
                   ],
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
-
-            // Stats
             Card(
               elevation: 4,
               child: Padding(
@@ -640,36 +514,15 @@ class ImpactPage extends StatelessWidget {
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
-
-            // Recent Activity
-            const Text(
-              'Recent Activity',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            const Text('Recent Activity', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Expanded(
               child: ListView(
                 children: const [
-                  _ActivityItem(
-                    title: 'Illegal Littering Report',
-                    points: '+10 points',
-                    time: '2 hours ago',
-                  ),
-                  _ActivityItem(
-                    title: 'Overflowing Bin Resolved',
-                    points: '+15 points',
-                    time: '1 day ago',
-                  ),
-                  _ActivityItem(
-                    title: 'Damaged Infrastructure Report',
-                    points: '+10 points',
-                    time: '2 days ago',
-                  ),
+                  _ActivityItem(title: 'Illegal Littering Report', points: '+10 points', time: '2 hours ago'),
+                  _ActivityItem(title: 'Overflowing Bin Resolved', points: '+15 points', time: '1 day ago'),
+                  _ActivityItem(title: 'Damaged Infrastructure Report', points: '+10 points', time: '2 days ago'),
                 ],
               ),
             ),
@@ -686,20 +539,8 @@ class ImpactPage extends StatelessWidget {
         children: [
           Icon(icon, color: Colors.green),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.green,
-            ),
-          ),
+          Expanded(child: Text(title, style: const TextStyle(fontSize: 16))),
+          Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green)),
         ],
       ),
     );
@@ -711,11 +552,7 @@ class _ActivityItem extends StatelessWidget {
   final String points;
   final String time;
 
-  const _ActivityItem({
-    required this.title,
-    required this.points,
-    required this.time,
-  });
+  const _ActivityItem({required this.title, required this.points, required this.time});
 
   @override
   Widget build(BuildContext context) {
@@ -728,18 +565,13 @@ class _ActivityItem extends StatelessWidget {
         ),
         title: Text(title),
         subtitle: Text(time),
-        trailing: Text(
-          points,
-          style: const TextStyle(
-            color: Colors.green,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        trailing: Text(points, style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
       ),
     );
   }
 }
 
+// ---------------- ACHIEVEMENTS PAGE ----------------
 class AchievementsPage extends StatelessWidget {
   const AchievementsPage({super.key});
 
@@ -756,49 +588,18 @@ class AchievementsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Your Achievements',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            const Text('Your Achievements', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-
-            // Achievements List
             Expanded(
-              child: ListView(
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
                 children: const [
-                  AchievementCard(
-                    title: 'Community Hero',
-                    description: '10 reports in a week',
-                    icon: Icons.people,
-                    achieved: true,
-                  ),
-                  AchievementCard(
-                    title: 'Early Reporter',
-                    description: 'First to report an issue',
-                    icon: Icons.access_time,
-                    achieved: true,
-                  ),
-                  AchievementCard(
-                    title: 'Clean Streak',
-                    description: 'Report for 30 consecutive days',
-                    icon: Icons.local_fire_department,
-                    achieved: false,
-                  ),
-                  AchievementCard(
-                    title: 'Issue Solver',
-                    description: 'Get 50 issues resolved',
-                    icon: Icons.check_circle,
-                    achieved: false,
-                  ),
-                  AchievementCard(
-                    title: 'Community Leader',
-                    description: 'Reach Level 5',
-                    icon: Icons.leaderboard,
-                    achieved: false,
-                  ),
+                  AchievementCard(title: 'First Report', description: 'Submit your first report', points: 10),
+                  AchievementCard(title: 'Eco Hero', description: 'Resolve 10 issues', points: 50),
+                  AchievementCard(title: 'Community Leader', description: 'Reach Level 5', points: 100),
+                  AchievementCard(title: 'Clean Streak', description: '7 days of consecutive reports', points: 20),
                 ],
               ),
             ),
@@ -812,46 +613,31 @@ class AchievementsPage extends StatelessWidget {
 class AchievementCard extends StatelessWidget {
   final String title;
   final String description;
-  final IconData icon;
-  final bool achieved;
+  final int points;
 
-  const AchievementCard({
-    super.key,
-    required this.title,
-    required this.description,
-    required this.icon,
-    required this.achieved,
-  });
+  const AchievementCard({required this.title, required this.description, required this.points});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 4,
-      margin: const EdgeInsets.only(bottom: 12),
-      color: achieved ? Colors.green[50] : Colors.grey[100],
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: achieved ? Colors.green : Colors.grey,
-          foregroundColor: Colors.white,
-          radius: 24,
-          child: Icon(icon),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 8),
+            Text(description, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text('+${points} pts', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+              ],
+            )
+          ],
         ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: achieved ? Colors.green[800] : Colors.grey[600],
-          ),
-        ),
-        subtitle: Text(
-          description,
-          style: TextStyle(
-            color: achieved ? Colors.green[600] : Colors.grey[500],
-          ),
-        ),
-        trailing: achieved
-            ? const Icon(Icons.verified, color: Colors.green)
-            : const Icon(Icons.lock, color: Colors.grey),
       ),
     );
   }

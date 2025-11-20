@@ -5,21 +5,14 @@ import 'package:smartsan_app/app.dart';
 import 'package:smartsan_app/features/community_reporting/presentation/report_issue_view.dart';
 import 'firebase_options.dart';
 
+
 void main() async {
-  runApp(const MyApp());
   WidgetsFlutterBinding.ensureInitialized();
-
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    print("Firebase initialized successfully!"); // Optional: for debugging
-  } catch (e) {
-    print("Error initializing Firebase: $e");
-  }
-  //runApp(const CommunityApp());
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

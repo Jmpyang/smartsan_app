@@ -1,13 +1,14 @@
 {
   "project_info": {
-    "project_number": "43509276428",
-    "project_id": "smartsan-00",
-    "storage_bucket": "smartsan-00.firebasestorage.app"
+    "project_number": "232497231284",
+    "project_id": "smartdebug-36862",
+    "storage_bucket": "smartdebug-36862.appspot.com"
+
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:43509276428:android:1d53824ab4c5a84909b329",
+        "mobilesdk_app_id": "1:232497231284:android:560bceb1d84121588f6ee1",
         "android_client_info": {
           "package_name": "com.example.smartsan_app"
         }
@@ -15,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAjo8T-vvhR5eh0wMyYfS1qTNAzKk2-XYE"
+          "current_key": "AIzaSyBGXhFRH0-Hnwtvx75Dp3bKCiPtacQQ4ec"
         }
       ],
       "services": {

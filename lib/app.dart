@@ -5,9 +5,10 @@ import 'package:smartsan_app/main.dart';
 import 'package:smartsan_app/features/workers/presentation/screens/workers_dashboard_screen.dart';
 import 'package:smartsan_app/features/analytics/presentation/screens/analytics_screen.dart';
 
-void main() {
+void main(){
   runApp(const DashBoard());
 }
+
 
 class DashBoard extends StatelessWidget {
   const DashBoard({super.key});
