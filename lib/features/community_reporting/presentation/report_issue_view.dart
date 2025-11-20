@@ -17,7 +17,7 @@ void main() async {
   await FirebaseAppCheck.instance.activate(
     androidProvider: AndroidProvider.debug,
     appleProvider: AppleProvider.debug,
-    webRecaptchaSiteKey: 'your-web-key', // Replace with your actual web key
+   // webRecaptchaSiteKey: 'your-web-key', // Replace with your actual web key
   );
 
   runApp(const CommunityApp());
@@ -147,6 +147,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
 
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
+      //uploadTask = storageRef.child('reports/${fileName}').putFile(file.path, metadata);
 
       return downloadUrl;
     } on FirebaseException catch (e) {
