@@ -6,7 +6,9 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:provider/provider.dart';
-
+import 'package:geolocator/geolocator.dart'; 
+import 'package:smartsan_app/features/community_reporting/domain/services/location_service.dart';
+import 'package:smartsan_app/features/community_reporting/presentation/location_picker_screen.dart';
 // --- Re-importing necessary project dependencies (assuming these are your actual paths) ---
 import 'package:smartsan_app/services/firestore_service.dart'; // Contains ReportService
 import 'package:smartsan_app/features/auth/data/providers/auth_provider.dart'; // The correct AuthProvider
@@ -117,6 +119,8 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
   final ImagePicker _picker = ImagePicker();
   List<XFile> _selectedImages = []; // Still track images in UI, but don't upload
   bool _isLoading = false;
+  bool _isLocationLoading = false;
+  Position? _currentPosition;
 
   String? _selectedCategory;
   String? _selectedPriority;
@@ -167,10 +171,83 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     setState(() => _selectedImages.removeAt(index));
   }
 
+    Future<void> _fetchLocation() async {
+    if (_isLocationLoading) return;
+
+    setState(() {
+      _isLocationLoading = true;
+      _locationController.text = 'Fetching GPS coordinates...';
+      _currentPosition = null; // Clear previous position
+    });
+
+    // In _ReportIssuePageState
+
+// This function will navigate to the map picker and wait for a result
+Future<void> _navigateToLocationPicker() async {
+  final result = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => LocationPickerScreen(
+        // Pass current coordinates to initialize the map if already fetched
+        initialLat: _currentPosition?.latitude ?? 0.0,
+        initialLng: _currentPosition?.longitude ?? 0.0,
+      ),
+    ),
+  );
+
+  if (result != null && result is PickedLocation) {
+    // Successfully received the picked location
+    setState(() {
+      _currentPosition = Position(
+        latitude: result.latitude,
+        longitude: result.longitude,
+        timestamp: DateTime.now(),
+        accuracy: 0.0, // Default accuracy as it's user-picked
+        altitude: 0.0, 
+        heading: 0.0, 
+        speed: 0.0, 
+        speedAccuracy: 0.0, 
+        isMocked: false
+      );
+      _locationController.text = 
+        'GPS: Lat ${result.latitude.toStringAsFixed(4)}, Lng ${result.longitude.toStringAsFixed(4)}';
+    });
+  }
+}
+
+    try {
+      final position = await _locationService.getCurrentLocation();
+      setState(() {
+        _currentPosition = position;
+        _locationController.text = 
+            'GPS: Lat ${position.latitude.toStringAsFixed(4)}, Lng ${position.longitude.toStringAsFixed(4)}';
+      });
+    } on Exception catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Location Error: ${e.toString()}')),
+        );
+      }
+      setState(() {
+        _locationController.clear();
+        _currentPosition = null;
+      });
+    } finally {
+      if (mounted) setState(() => _isLocationLoading = false);
+    }
+  }
+
   void _submitReport() async {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill out all required fields marked with *.')),
+      );
+      return;
+    }
+
+     if (_currentPosition == null && _locationController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fetch GPS location or manually enter the location.')),
       );
       return;
     }
@@ -197,9 +274,16 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
       // Extract the simple priority string (e.g., "High" from "High - Urgent")
       final priority = _selectedPriority!.split(' - ').first;
 
+      try {
+      // 1. Prepare Location Data
+      double lat = _currentPosition?.latitude ?? 0.0;
+      double lng = _currentPosition?.longitude ?? 0.0;
+      String locationString = _locationController.text.trim();
+      }
+
       // Placeholder coordinates for demonstration (can be replaced by actual GPS coordinates later)
-      const double placeholderLat = 34.0522;
-      const double placeholderLng = -118.2437;
+      // const double placeholderLat = 34.0522;
+      // const double placeholderLng = -118.2437;
 
       await _reportService.submitReport(
         description: _descriptionController.text.trim(),
@@ -300,18 +384,37 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                 validator: (value) => value == null ? 'Please select a category' : null, 
               ),
               const SizedBox(height: 20),
-
-              // Location (Required TextFormField)
               const Text('Location *', style: TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
-              TextFormField( 
-                controller: _locationController,
-                decoration: InputDecoration(
-                  hintText: 'Enter or select location',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  prefixIcon: const Icon(Icons.location_on),
-                ),
-                validator: (value) => value!.trim().isEmpty ? 'Location is required' : null,
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField( 
+                      controller: _locationController,
+                      readOnly: true, // Make it read-only since it's populated by GPS
+                      decoration: InputDecoration(
+                        hintText: 'Select location via map',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        prefixIcon: const Icon(Icons.location_on),
+                      ),
+                      validator: (value) => value!.trim().isEmpty ? 'Location is required' : null,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                      height: 56, // Match height of TextFormField
+                      child: ElevatedButton.icon(
+                        onPressed: _isLoading ? null : _navigateToLocationPicker, 
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        icon: const Icon(Icons.map),
+                        label: const Text('Map'),
+                      ),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
 
