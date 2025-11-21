@@ -329,7 +329,7 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           const Text(
-            "© 2025 SmartSan. Building sustainable communities worldwide.",
+            "© 2025 SmartSan. Building \n sustainable communities worldwide.",
             style: TextStyle(fontSize: 10, color: Color(0xFF666666)),
           ),
         ],

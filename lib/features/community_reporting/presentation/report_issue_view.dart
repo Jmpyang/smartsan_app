@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-// Removed: import 'package:firebase_storage/firebase_storage.dart'; 
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
@@ -113,6 +112,12 @@ class ReportIssuePage extends StatefulWidget {
 class _ReportIssuePageState extends State<ReportIssuePage> {
   // Use the ReportService imported from firestore_service.dart
   final ReportService _reportService = ReportService();
+  final LocationService _locationService = LocationService();
+
+  // Re-added for map initialization consistency
+  final double defaultLat = 34.0522;
+  final double defaultLng = -118.2437;
+
 
   final _formKey = GlobalKey<FormState>();
   
@@ -140,8 +145,6 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     "Medium - Address soon",
     "High - Urgent"
   ];
-
-  // REMOVED: The entire _uploadImageToStorage function
 
   Future<void> _pickImage() async {
     try {
@@ -171,26 +174,15 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     setState(() => _selectedImages.removeAt(index));
   }
 
-    Future<void> _fetchLocation() async {
-    if (_isLocationLoading) return;
-
-    setState(() {
-      _isLocationLoading = true;
-      _locationController.text = 'Fetching GPS coordinates...';
-      _currentPosition = null; // Clear previous position
-    });
-
-    // In _ReportIssuePageState
-
-// This function will navigate to the map picker and wait for a result
+// This function was defined inside _fetchLocation(), causing error 3. Moved to class scope.
 Future<void> _navigateToLocationPicker() async {
   final result = await Navigator.push(
     context,
     MaterialPageRoute(
       builder: (context) => LocationPickerScreen(
         // Pass current coordinates to initialize the map if already fetched
-        initialLat: _currentPosition?.latitude ?? 0.0,
-        initialLng: _currentPosition?.longitude ?? 0.0,
+        initialLat: _currentPosition?.latitude ?? defaultLat, // Using defaultLat
+        initialLng: _currentPosition?.longitude ?? defaultLng, // Using defaultLng
       ),
     ),
   );
@@ -207,6 +199,10 @@ Future<void> _navigateToLocationPicker() async {
         heading: 0.0, 
         speed: 0.0, 
         speedAccuracy: 0.0, 
+        headingAccuracy: 0.0,
+        altitudeAccuracy: 0.0,
+        // The Position constructor requires both altitudeAccuracy and floor.
+        floor: 0, 
         isMocked: false
       );
       _locationController.text = 
@@ -214,6 +210,15 @@ Future<void> _navigateToLocationPicker() async {
     });
   }
 }
+
+  Future<void> _fetchLocation() async {
+    if (_isLocationLoading) return;
+
+    setState(() {
+      _isLocationLoading = true;
+      _locationController.text = 'Fetching GPS coordinates...';
+      _currentPosition = null; // Clear previous position
+    });
 
     try {
       final position = await _locationService.getCurrentLocation();
@@ -251,8 +256,6 @@ Future<void> _navigateToLocationPicker() async {
       );
       return;
     }
-
-    // REMOVED: Image check validation (since it is no longer being uploaded)
     
     // Use Provider.of to access the AuthProvider
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -274,16 +277,15 @@ Future<void> _navigateToLocationPicker() async {
       // Extract the simple priority string (e.g., "High" from "High - Urgent")
       final priority = _selectedPriority!.split(' - ').first;
 
-      try {
+      
       // 1. Prepare Location Data
       double lat = _currentPosition?.latitude ?? 0.0;
       double lng = _currentPosition?.longitude ?? 0.0;
       String locationString = _locationController.text.trim();
-      }
 
       // Placeholder coordinates for demonstration (can be replaced by actual GPS coordinates later)
       // const double placeholderLat = 34.0522;
-      // const double placeholderLng = -118.2437;
+      // const double placeholderLng = -118.2437; // Removed these constants as they were causing errors 1 & 2
 
       await _reportService.submitReport(
         description: _descriptionController.text.trim(),
@@ -292,8 +294,9 @@ Future<void> _navigateToLocationPicker() async {
         // Set to empty string to maintain the function signature
         imageUrl: placeholderImageUrl, 
         locationString: _locationController.text.trim(),
-        lat: placeholderLat,
-        lng: placeholderLng,
+        // FIX: Use the calculated local variables 'lat' and 'lng'
+        lat: lat,
+        lng: lng,
         reporterUid: reporterUid, 
       );
 
@@ -404,6 +407,7 @@ Future<void> _navigateToLocationPicker() async {
                   SizedBox(
                       height: 56, // Match height of TextFormField
                       child: ElevatedButton.icon(
+                        // FIX: _navigateToLocationPicker is now available in the class scope
                         onPressed: _isLoading ? null : _navigateToLocationPicker, 
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,

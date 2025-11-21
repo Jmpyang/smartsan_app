@@ -55,6 +55,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '43509276428',
     projectId: 'smartsan-00',
     authDomain: 'smartsan-00.firebaseapp.com',
+    databaseURL: 'https://smartsan-00-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'smartsan-00.firebasestorage.app',
     measurementId: 'G-3SZ7Y4WRME',
   );
@@ -64,6 +65,7 @@ class DefaultFirebaseOptions {
     appId: '1:43509276428:android:1d53824ab4c5a84909b329',
     messagingSenderId: '43509276428',
     projectId: 'smartsan-00',
+    databaseURL: 'https://smartsan-00-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'smartsan-00.firebasestorage.app',
   );
 
