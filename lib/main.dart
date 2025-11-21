@@ -2,16 +2,25 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:smartsan_app/app.dart';
-import 'package:smartsan_app/features/community_reporting/presentation/report_issue_view.dart';
+//import 'package:smartsan_app/features/community_reporting/presentation/report_issue_view.dart';
 import 'firebase_options.dart';
-
+import 'package:smartsan_app/features/auth/presentation/login_view.dart';
+import 'package:smartsan_app/features/auth/presentation/signup_view.dart';
+import 'package:smartsan_app/features/auth/data/providers/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      // 1. Instantiate your AuthProvider
+      create: (context) => AuthProvider(), 
+      // 2. Wrap your entire application
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -21,10 +30,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Smart san',
+      //create: (context) => AuthProvider(),
       home: const HomePage(),
     );
   }
 }
+
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -89,8 +101,8 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       ElevatedButton(onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(
-                            builder: (context) => CommunityApp()));
+                        // Navigator.push(context, MaterialPageRoute(
+                        //     builder: (context) => CommunityApp()));
                       },
                         child: Text("Report an Issue"),
                         style: ElevatedButton.styleFrom(
@@ -147,7 +159,7 @@ class _HomePageState extends State<HomePage> {
             ),
             ElevatedButton.icon(onPressed: () {
               Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => DashBoard()));
+                  MaterialPageRoute(builder: (context) => LoginPage()));
             },
               label: Text("Get Started Now"),
               icon: Icon(Icons.arrow_forward),

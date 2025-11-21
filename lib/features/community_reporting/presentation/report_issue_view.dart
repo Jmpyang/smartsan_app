@@ -7,17 +7,19 @@ import 'package:smartsan_app/services/report_service.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart'; // For kIsWeb check and platform-specific file handling
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_app_check/firebase_app_check.dart'; // NEW: Firebase App Check
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:provider/provider.dart';
+import 'package:smartsan_app/features/auth/data/providers/auth_provider.dart';
+import 'package:smartsan_app/services/firestore_service.dart'; // For IssueReport class
+import 'package:smartsan_app/features/auth/domain/services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  // --- NEW: Enable Firebase App Check in debug mode ---
   await FirebaseAppCheck.instance.activate(
     androidProvider: AndroidProvider.debug,
     appleProvider: AppleProvider.debug,
-   // webRecaptchaSiteKey: 'your-web-key', // Replace with your actual web key
   );
 
   runApp(const CommunityApp());
@@ -56,9 +58,7 @@ class _MainHomePageState extends State<MainHomePage> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          setState(() => _currentIndex = index);
         },
         items: const [
           BottomNavigationBarItem(
@@ -100,10 +100,13 @@ class ReportIssuePage extends StatefulWidget {
 }
 
 class _ReportIssuePageState extends State<ReportIssuePage> {
-  // Service instance
   final ReportService _reportService = ReportService();
 
-  // State variables
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _titleController = TextEditingController();
+  double _currentLat = 0.0;
+  double _currentLon = 0.0;
+
   final ImagePicker _picker = ImagePicker();
   List<XFile> _selectedImages = [];
   bool _isLoading = false;
@@ -127,7 +130,6 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     "High - Urgent"
   ];
 
-  // --- NEW: Image Upload Function (with web fix and error handling) ---
   Future<String?> _uploadImageToStorage(XFile file) async {
     try {
       final storageRef = FirebaseStorage.instance.ref();
@@ -135,21 +137,15 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
       final imageRef = storageRef.child('reports/$fileName');
 
       UploadTask uploadTask;
-      SettableMetadata? metadata;
-
       if (kIsWeb) {
         final bytes = await file.readAsBytes();
-        metadata = SettableMetadata(contentType: 'image/jpeg');
-        uploadTask = imageRef.putData(bytes, metadata);
+        uploadTask = imageRef.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
       } else {
         uploadTask = imageRef.putFile(File(file.path));
       }
 
       final snapshot = await uploadTask;
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-      //uploadTask = storageRef.child('reports/${fileName}').putFile(file.path, metadata);
-
-      return downloadUrl;
+      return await snapshot.ref.getDownloadURL();
     } on FirebaseException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -160,7 +156,6 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     }
   }
 
-  // --- Image Picker ---
   Future<void> _pickImage() async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -171,8 +166,9 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
       );
       if (image != null) {
         setState(() {
-          _selectedImages.clear();
-          _selectedImages.add(image);
+          _selectedImages
+            ..clear()
+            ..add(image);
         });
       }
     } catch (e) {
@@ -185,63 +181,58 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
   }
 
   void _removeImage(int index) {
-    setState(() {
-      _selectedImages.removeAt(index);
-    });
+    setState(() => _selectedImages.removeAt(index));
   }
 
-  // --- Submit Report ---
   void _submitReport() async {
     if (_selectedCategory == null || _selectedPriority == null || _selectedImages.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select category, priority, and at least one photo.')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select category, priority, and at least one photo.')),
+      );
       return;
     }
 
     if (_locationController.text.trim().isEmpty || _descriptionController.text.trim().isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please fill in the location and description.')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in the location and description.')),
+      );
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    //final authService = Provider.of<AuthService>(context, listen: false);
+    final reporterUid = authProvider.currentUser?.uid ?? 'anonymous';
 
-    try {
-      final imageUrl = await _uploadImageToStorage(_selectedImages.first);
-      if (imageUrl == null) return;
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
 
-      final priority = _selectedPriority!.split(' - ').first;
+      try {
+        final imageUrl = await _uploadImageToStorage(_selectedImages.first);
+        if (imageUrl == null) return;
 
-      const double placeholderLat = 34.0522;
-      const double placeholderLng = -118.2437;
+        final priority = _selectedPriority!.split(' - ').first;
 
-      await _reportService.submitReport(
-        description: _descriptionController.text.trim(),
-        category: _selectedCategory!,
-        priority: priority,
-        imageUrl: imageUrl,
-        locationString: _locationController.text.trim(),
-        lat: placeholderLat,
-        lng: placeholderLng,
-      );
+        const double placeholderLat = 34.0522;
+        const double placeholderLng = -118.2437;
 
-      _showSubmissionSuccessDialog();
-    } catch (e) {
-      if (mounted) {
+        await _reportService.submitReport(
+          description: _descriptionController.text.trim(),
+          category: _selectedCategory!,
+          priority: priority,
+          imageUrl: imageUrl,
+          locationString: _locationController.text.trim(),
+          lat: placeholderLat,
+          lng: placeholderLng,
+        );
+
+        _showSubmissionSuccessDialog();
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Submission failed. Check your network or permissions.')),
         );
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -307,9 +298,9 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                 hintText: 'Select category',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              items: _categories.entries.map((entry) {
-                return DropdownMenuItem(value: entry.key, child: Text(entry.key));
-              }).toList(),
+              items: _categories.entries
+                  .map((entry) => DropdownMenuItem(value: entry.key, child: Text(entry.key)))
+                  .toList(),
               onChanged: (value) => setState(() => _selectedCategory = value),
             ),
             const SizedBox(height: 20),
@@ -344,9 +335,9 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                 hintText: 'Select priority',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              items: _prioritiesList.map((item) {
-                return DropdownMenuItem(value: item, child: Text(item));
-              }).toList(),
+              items: _prioritiesList
+                  .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+                  .toList(),
               onChanged: (value) => setState(() => _selectedPriority = value),
             ),
             const SizedBox(height: 20),
@@ -391,8 +382,8 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                           borderRadius: BorderRadius.circular(8),
                           image: DecorationImage(
                             image: kIsWeb
-                                ? NetworkImage(image.path) as ImageProvider<Object>
-                                : FileImage(File(image.path)),
+                                ? NetworkImage(image.path)
+                                : FileImage(File(image.path)) as ImageProvider,
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -473,7 +464,7 @@ class ImpactPage extends StatelessWidget {
                   children: [
                     const Text('Total Points', style: TextStyle(fontSize: 16, color: Colors.grey)),
                     const SizedBox(height: 8),
-                    Text('245', style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.green[700])),
+                    Text('245', style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.green)),
                     const SizedBox(height: 16),
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -485,10 +476,9 @@ class ImpactPage extends StatelessWidget {
                     const SizedBox(height: 8),
                     LinearProgressIndicator(
                       value: 245 / 300,
-                      backgroundColor: Colors.grey[300],
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.green[700]!),
+                      backgroundColor: Colors.grey,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
                       minHeight: 8,
-                      borderRadius: BorderRadius.circular(4),
                     ),
                     const SizedBox(height: 8),
                     const Align(
