@@ -4,6 +4,7 @@ import 'package:smartsan_app/features/auth/domain/services/auth_service.dart';
 import 'package:smartsan_app/features/auth/data/models/user_model.dart';
 import 'package:smartsan_app/features/auth/presentation/login_view.dart';
 import 'package:smartsan_app/features/auth/data/providers/auth_provider.dart';
+import 'package:smartsan_app/app.dart';
 
 class SignupPage extends StatefulWidget { // CHANGED to StatefulWidget
   const SignupPage({super.key});
@@ -66,7 +67,13 @@ class _SignupPageState extends State<SignupPage> {
         _showSuccessDialog();
       }
     } catch (e) {
-      _showErrorDialog("Sign up failed: $e");
+      String errorMessage = "Sign up failed. Please try again.";
+      if (e.toString().contains('email-already-in-use')) {
+        errorMessage = "The email address is already in use by another account.";
+      } else if (e.toString().contains('invalid-email')) {
+        errorMessage = "The email address format is invalid.";
+      } 
+      _showErrorDialog(errorMessage);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -96,8 +103,15 @@ class _SignupPageState extends State<SignupPage> {
         content: const Text('Account created successfully!'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+            onPressed: (){
+              Navigator.pop(context);
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const DashBoard()),
+                (Route<dynamic> route) => false, // This condition ensures all previous routes are removed
+          );
+            },
+            child: const Text('Continue to App'),
           ),
         ],
       ),

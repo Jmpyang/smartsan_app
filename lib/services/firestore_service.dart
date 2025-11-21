@@ -1,35 +1,103 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-// 🎯 Model for a simple Issue Report
+
 class IssueReport {
-  final String title;
+  final String id;
+  final String reporterUid;
   final String description;
-  final double latitude;
-  final double longitude;
+  final String category;
+  final String priority;
+  final String imageUrl;
+  final String locationString;
+  final double lat;
+  final double lng;
+  final DateTime timestamp;
   final String status;
-  final String reportedBy;
-  
+
   IssueReport({
-    required this.title,
+    required this.id,
+    required this.reporterUid,
     required this.description,
-    required this.latitude,
-    required this.longitude,
-    this.status = 'Pending', // Default status
-    required this.reportedBy,
+    required this.category,
+    required this.priority,
+    required this.imageUrl,
+    required this.locationString,
+    required this.lat,
+    required this.lng,
+    required this.timestamp,
+    this.status = 'Reported',
   });
 
-  // Method to convert the Dart object to a JSON-compatible Map for Firebase
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toMap() {
     return {
-      'title': title,
+      'reporterUid': reporterUid,
       'description': description,
-      'latitude': latitude,
-      'longitude': longitude,
+      'category': category,
+      'priority': priority,
+      'imageUrl': imageUrl,
+      'locationString': locationString,
+      'lat': lat,
+      'lng': lng,
+      'timestamp': Timestamp.fromDate(timestamp), // Use Firestore Timestamp
       'status': status,
-      'reportedBy': reportedBy,
-      'timestamp': ServerValue.timestamp, // Firebase utility to record server time
     };
+  }
+  // Factory constructor to create IssueReport from Firestore Map
+  factory IssueReport.fromMap(String id, Map<String, dynamic> map) {
+    return IssueReport(
+      id: id,
+      reporterUid: map['reporterUid'] ?? 'unknown',
+      description: map['description'] ?? '',
+      category: map['category'] ?? 'Other',
+      priority: map['priority'] ?? 'Low',
+      imageUrl: map['imageUrl'] ?? '',
+      locationString: map['locationString'] ?? 'Unknown Location',
+      lat: (map['lat'] as num?)?.toDouble() ?? 0.0,
+      lng: (map['lng'] as num?)?.toDouble() ?? 0.0,
+      timestamp: (map['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      status: map['status'] ?? 'Reported',
+    );
+  }
+  
+}
+
+class ReportService {
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  Future<void> submitReport({
+    required String description,
+    required String category,
+    required String priority,
+    required String imageUrl,
+    required String locationString,
+    required double lat,
+    required double lng,
+    required String reporterUid, // Ensure this is passed
+  }) async {
+    // Reference to the 'issueReports' collection
+    final collectionRef = _db.collection('issueReports');
+    
+    // Create a new document reference to get the ID
+    final docRef = collectionRef.doc();
+
+    final report = IssueReport(
+      id: docRef.id,
+      reporterUid: reporterUid,
+      description: description,
+      category: category,
+      priority: priority,
+      imageUrl: imageUrl,
+      locationString: locationString,
+      lat: lat,
+      lng: lng,
+      timestamp: DateTime.now(),
+      status: 'Reported',
+    );
+
+    // Save the data to Firestore
+    await docRef.set(report.toMap());
   }
 }
 
@@ -44,7 +112,7 @@ class FirebaseService {
     
     try {
       // 2. Set the data using the toJson map
-      await issuesRef.set(report.toJson());
+      await issuesRef.set(report.toMap());
       if (kDebugMode) {
         print('Issue successfully reported with key: ${issuesRef.key}');
       }

@@ -23,6 +23,8 @@
       <root url="file://$PROJECT_DIR$/../.pub-cache/hosted/pub.dev/firebase_storage_web-3.11.0" />
       <root url="file://$PROJECT_DIR$/../.pub-cache/hosted/pub.dev/image_picker-1.2.1" />
       <root url="file://$PROJECT_DIR$/../.pub-cache/hosted/pub.dev/firebase_app_check_web-0.2.2" />
+      <root url="file://$PROJECT_DIR$/../.pub-cache/hosted/pub.dev/firebase_database-12.1.0" />
+      <root url="file://$PROJECT_DIR$/../.pub-cache/hosted/pub.dev/firebase_database_web-0.2.7+1" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

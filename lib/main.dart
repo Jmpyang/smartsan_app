@@ -8,7 +8,8 @@ import 'package:smartsan_app/features/auth/presentation/login_view.dart';
 import 'package:smartsan_app/features/auth/presentation/signup_view.dart';
 import 'package:smartsan_app/features/auth/data/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
-
+import 'package:smartsan_app/services/firestore_service.dart'; // For IssueReport class
+import 'package:smartsan_app/services/report_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

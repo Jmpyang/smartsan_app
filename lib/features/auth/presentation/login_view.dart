@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartsan_app/main.dart';
+import 'package:smartsan_app/app.dart';
 import 'package:smartsan_app/features/auth/domain/services/auth_service.dart';
 import 'package:smartsan_app/features/auth/data/models/user_model.dart';
 import 'package:smartsan_app/features/auth/presentation/signup_view.dart';
@@ -32,10 +33,23 @@ class _LoginPageState extends State<LoginPage> {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       await authProvider.login(_emailController.text, _passwordController.text);
       // Navigation will be handled by AuthWrapper in main.dart
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => DashBoard()),
+        (Route<dynamic> route) => false, // This removes all previous routes
+      );
     } catch (e) {
-      _showErrorDialog("Login failed: $e");
+      String errorMessage = "Login failed. Please check your credentials.";
+      if (e.toString().contains('user-not-found')) {
+        errorMessage = "No user found with that email.";
+      } else if (e.toString().contains('wrong-password')) {
+        errorMessage = "Wrong password provided for that user.";
+      }
+      _showErrorDialog(errorMessage);
     } finally {
-      setState(() => _isLoading = false);
+       if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -67,8 +81,12 @@ class _LoginPageState extends State<LoginPage> {
             padding: const EdgeInsets.only(right: 16.0),
             child: IconButton(
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(
-                  builder: (context) => HomePage()));
+                // Navigating back to HomePage, clearing login view from stack
+                Navigator.pushAndRemoveUntil(
+                  context, 
+                  MaterialPageRoute(builder: (context) => const HomePage()),
+                  (Route<dynamic> route) => false,
+                );
               },
               icon: const Icon(
                 Icons.close,
