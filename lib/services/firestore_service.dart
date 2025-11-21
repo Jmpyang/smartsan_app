@@ -77,13 +77,16 @@ class ReportService {
     required String reporterUid, // Ensure this is passed
   }) async {
     // Reference to the 'issueReports' collection
-    final collectionRef = _db.collection('issueReports');
-    
+    //final collectionRef = _db.collection('reports').doc();
+    const String existingDocId = 'dnOKQ2DXDib4kco9BOgc';
     // Create a new document reference to get the ID
-    final docRef = collectionRef.doc();
+    //final docRef = collectionRef.doc('dnOKQ2DXDib4kco9BOgc');
+    final docRef = _db.collection('reports').doc(existingDocId);
+
 
     final report = IssueReport(
-      id: docRef.id,
+      //id: docRef.id,
+      id: existingDocId,
       reporterUid: reporterUid,
       description: description,
       category: category,
@@ -96,8 +99,11 @@ class ReportService {
       status: 'Reported',
     );
 
-    // Save the data to Firestore
-    await docRef.set(report.toMap());
+    await docRef.set(
+      report.toMap()..['timestamp'] = FieldValue.serverTimestamp(),
+      SetOptions(merge: true),
+    );
+    print('Report $existingDocId successfully updated in Firestore!');
   }
 }
 

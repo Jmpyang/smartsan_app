@@ -2,8 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:smartsan_app/features/community_reporting/presentation/report_issue_view.dart';
 import 'package:smartsan_app/main.dart';
+import 'package:provider/provider.dart';
+import 'package:smartsan_app/features/auth/data/providers/auth_provider.dart';
 import 'package:smartsan_app/features/workers/presentation/screens/workers_dashboard_screen.dart';
 import 'package:smartsan_app/features/analytics/presentation/screens/analytics_screen.dart';
+import 'package:smartsan_app/features/auth/domain/services/auth_service.dart';
 
 void main(){
   runApp(const DashBoard());
@@ -64,10 +67,10 @@ class _DashBoardPage extends State<DashboardPage> {
               title: const Text("Home", style: TextStyle(color: Colors.white)),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const HomePage()),
-                );
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(builder: (context) => const HomePage()),
+                // );
               },
             ),
             ListTile(
@@ -109,6 +112,27 @@ class _DashBoardPage extends State<DashboardPage> {
                 );
               },
             ),
+            ListTile(
+              trailing: const Icon(Icons.logout, color: Colors.white),
+              title: const Text("Logout", style: TextStyle(color: Colors.white)),
+              onTap: () async {
+    
+            Navigator.pop(context);
+
+            bool confirm = await showLogoutConfirmationDialog(context);
+            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+            if (confirm) {
+            await authProvider.logout();
+            Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const HomePage()),
+                );
+                }
+  },
+),
+
           ],
         ),
       ),
@@ -240,6 +264,31 @@ class _DashBoardPage extends State<DashboardPage> {
     );
   }
 }
+
+Future<bool> showLogoutConfirmationDialog(BuildContext context) async {
+  return await showDialog(
+    context: context,
+    barrierDismissible: false, // User must choose an option
+    builder: (context) => AlertDialog(
+      title: const Text("Confirm Logout"),
+      content: const Text("Are you sure you want to log out?"),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false), // Cancel
+          child: const Text("Cancel"),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(true), // Confirm
+          child: const Text(
+            "Logout",
+            style: TextStyle(color: Colors.red),
+          ),
+        ),
+      ],
+    ),
+  ) ?? false;
+}
+
 
 Widget _summaryItem(IconData icon, Color color, String label, String value) {
   return Padding(

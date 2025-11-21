@@ -93,8 +93,8 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       ElevatedButton.icon(
                         onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(
-                              builder: (context) => DashBoard()));
+                          Navigator.push(context,
+                          MaterialPageRoute(builder: (context) => LoginPage()));
                         },
                         label: const Text("View Dashboard"),
                         icon: const Icon(Icons.arrow_forward),
@@ -105,7 +105,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       ElevatedButton(onPressed: () {
                          Navigator.push(context, MaterialPageRoute(
-                             builder: (context) => CommunityApp()));
+                             builder: (context) => LoginPage()));
                       },
                         child: Text("Report an Issue"),
                         style: ElevatedButton.styleFrom(

@@ -117,183 +117,388 @@ class _SignupPageState extends State<SignupPage> {
       ),
     );
   }
-
-  @override
+ 
+@override
   Widget build(BuildContext context) {
+    // Get the current screen height to ensure the SingleChildScrollView's content
+    // takes up at least the full screen height when the keyboard is down.
+    final double screenHeight = MediaQuery.of(context).size.height;
+    
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF62B570), Color(0xFF62B570)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      // 1. GestureDetector to dismiss keyboard on tap outside any TextField
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: Container(
+          width: double.infinity,
+          height: screenHeight, // Use exact screen height
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF62B570), Color(0xFF62B570)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Create Account',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+          // 2. SingleChildScrollView enables scrolling when keyboard is active
+          child: SingleChildScrollView(
+            // ConstrainedBox and IntrinsicHeight ensure the content takes full
+            // available height, allowing MainAxisAlignment.center to work
+            // even when the content is smaller than the screen.
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: screenHeight,
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Join our our smart sanitation community',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.white70,
-                ),
-              ),
-              const SizedBox(height: 40),
-              
-              // Name TextField - UPDATED: Added controller
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TextField(
-                  controller: _nameController, // ADDED: Controller
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.person_outline, color: Colors.grey[600]),
-                    hintText: 'Full Name',
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Email TextField - UPDATED: Added controller
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TextField(
-                  controller: _emailController, // ADDED: Controller
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.email_outlined, color: Colors.grey[600]),
-                    hintText: 'Email',
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Password TextField - UPDATED: Added controller
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TextField(
-                  controller: _passwordController, // ADDED: Controller
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[600]),
-                    hintText: 'Password',
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Confirm Password TextField - UPDATED: Added controller
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TextField(
-                  controller: _confirmPasswordController, // ADDED: Controller
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[600]),
-                    hintText: 'Confirm Password',
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              // Sign Up Button - UPDATED: Connected to signup function
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _signUpWithEmail, // ADDED: Signup function
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.black) // ADDED: Loading indicator
-                      : const Text(
-                          'Sign Up',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Create Account',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Join our our smart sanitation community',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      
+                      // Name TextField
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: TextField(
+                          controller: _nameController,
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.person_outline, color: Colors.grey[600]),
+                            hintText: 'Full Name',
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Email TextField
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: TextField(
+                          controller: _emailController,
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.email_outlined, color: Colors.grey[600]),
+                            hintText: 'Email',
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Password TextField
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: TextField(
+                          controller: _passwordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[600]),
+                            hintText: 'Password',
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Confirm Password TextField
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: TextField(
+                          controller: _confirmPasswordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[600]),
+                            hintText: 'Confirm Password',
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // Sign Up Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _signUpWithEmail,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: _isLoading
+                              ? const CircularProgressIndicator(color: Colors.black)
+                              : const Text(
+                                  'Sign Up',
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      _buildSignupButton(
+                        context,
+                        'Sign up with Google',
+                        Icons.g_mobiledata,
+                        Colors.red,
+                        onPressed: _isLoading ? null : () {
+                          // TODO: Implement Google Sign Up
+                          _showErrorDialog("Google Sign Up not implemented yet");
+                        },
+                      ),
+                      
+                      // Spacer pushes the remaining content to the bottom
+                      const Spacer(),
+                      
+                      const SizedBox(height: 30),
+                      
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "Already have an account? ",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          GestureDetector(
+                            onTap: _isLoading ? null : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const LoginPage()),
+                              );
+                            },
+                            child: Text(
+                              'Login',
+                              style: TextStyle(
+                                color: _isLoading ? Colors.white54 : Colors.white,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16), // Extra space at the bottom
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
-              
-              _buildSignupButton(
-                context,
-                'Sign up with Google',
-                Icons.g_mobiledata,
-                Colors.red,
-                onPressed: _isLoading ? null : () {
-                  // TODO: Implement Google Sign Up
-                  _showErrorDialog("Google Sign Up not implemented yet");
-                },
-              ),
-              const SizedBox(height: 30),
-              
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    "Already have an account? ",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  GestureDetector(
-                    onTap: _isLoading ? null : () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LoginPage()),
-                      );
-                    },
-                    child: Text(
-                      'Login',
-                      style: TextStyle(
-                        color: _isLoading ? Colors.white54 : Colors.white,
-                        fontWeight: FontWeight.bold,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Scaffold(
+  //     body: Container(
+  //       width: double.infinity,
+  //       height: double.infinity,
+  //       decoration: const BoxDecoration(
+  //         gradient: LinearGradient(
+  //           colors: [Color(0xFF62B570), Color(0xFF62B570)],
+  //           begin: Alignment.topCenter,
+  //           end: Alignment.bottomCenter,
+  //         ),
+  //       ),
+  //       child: Padding(
+  //         padding: const EdgeInsets.all(24.0),
+  //         child: Column(
+  //           mainAxisAlignment: MainAxisAlignment.center,
+  //           children: [
+  //             const Text(
+  //               'Create Account',
+  //               style: TextStyle(
+  //                 fontSize: 28,
+  //                 fontWeight: FontWeight.bold,
+  //                 color: Colors.white,
+  //               ),
+  //             ),
+  //             const SizedBox(height: 8),
+  //             const Text(
+  //               'Join our our smart sanitation community',
+  //               style: TextStyle(
+  //                 fontSize: 18,
+  //                 color: Colors.white70,
+  //               ),
+  //             ),
+  //             const SizedBox(height: 40),
+              
+  //             // Name TextField - UPDATED: Added controller
+  //             Container(
+  //               decoration: BoxDecoration(
+  //                 color: Colors.white.withOpacity(0.9),
+  //                 borderRadius: BorderRadius.circular(12),
+  //               ),
+  //               child: TextField(
+  //                 controller: _nameController, // ADDED: Controller
+  //                 decoration: InputDecoration(
+  //                   prefixIcon: Icon(Icons.person_outline, color: Colors.grey[600]),
+  //                   hintText: 'Full Name',
+  //                   border: InputBorder.none,
+  //                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  //                 ),
+  //               ),
+  //             ),
+  //             const SizedBox(height: 16),
+              
+  //             // Email TextField - UPDATED: Added controller
+  //             Container(
+  //               decoration: BoxDecoration(
+  //                 color: Colors.white.withOpacity(0.9),
+  //                 borderRadius: BorderRadius.circular(12),
+  //               ),
+  //               child: TextField(
+  //                 controller: _emailController, // ADDED: Controller
+  //                 decoration: InputDecoration(
+  //                   prefixIcon: Icon(Icons.email_outlined, color: Colors.grey[600]),
+  //                   hintText: 'Email',
+  //                   border: InputBorder.none,
+  //                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  //                 ),
+  //               ),
+  //             ),
+  //             const SizedBox(height: 16),
+              
+  //             // Password TextField - UPDATED: Added controller
+  //             Container(
+  //               decoration: BoxDecoration(
+  //                 color: Colors.white.withOpacity(0.9),
+  //                 borderRadius: BorderRadius.circular(12),
+  //               ),
+  //               child: TextField(
+  //                 controller: _passwordController, // ADDED: Controller
+  //                 obscureText: true,
+  //                 decoration: InputDecoration(
+  //                   prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[600]),
+  //                   hintText: 'Password',
+  //                   border: InputBorder.none,
+  //                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  //                 ),
+  //               ),
+  //             ),
+  //             const SizedBox(height: 16),
+              
+  //             // Confirm Password TextField - UPDATED: Added controller
+  //             Container(
+  //               decoration: BoxDecoration(
+  //                 color: Colors.white.withOpacity(0.9),
+  //                 borderRadius: BorderRadius.circular(12),
+  //               ),
+  //               child: TextField(
+  //                 controller: _confirmPasswordController, // ADDED: Controller
+  //                 obscureText: true,
+  //                 decoration: InputDecoration(
+  //                   prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[600]),
+  //                   hintText: 'Confirm Password',
+  //                   border: InputBorder.none,
+  //                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  //                 ),
+  //               ),
+  //             ),
+  //             const SizedBox(height: 24),
+              
+  //             // Sign Up Button - UPDATED: Connected to signup function
+  //             SizedBox(
+  //               width: double.infinity,
+  //               height: 56,
+  //               child: ElevatedButton(
+  //                 onPressed: _isLoading ? null : _signUpWithEmail, // ADDED: Signup function
+  //                 style: ElevatedButton.styleFrom(
+  //                   backgroundColor: Colors.white,
+  //                   foregroundColor: Colors.black,
+  //                   shape: RoundedRectangleBorder(
+  //                     borderRadius: BorderRadius.circular(12),
+  //                   ),
+  //                 ),
+  //                 child: _isLoading
+  //                     ? const CircularProgressIndicator(color: Colors.black) // ADDED: Loading indicator
+  //                     : const Text(
+  //                         'Sign Up',
+  //                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+  //                       ),
+  //               ),
+  //             ),
+  //             const SizedBox(height: 16),
+              
+  //             _buildSignupButton(
+  //               context,
+  //               'Sign up with Google',
+  //               Icons.g_mobiledata,
+  //               Colors.red,
+  //               onPressed: _isLoading ? null : () {
+  //                 // TODO: Implement Google Sign Up
+  //                 _showErrorDialog("Google Sign Up not implemented yet");
+  //               },
+  //             ),
+  //             const SizedBox(height: 30),
+              
+  //             Row(
+  //               mainAxisAlignment: MainAxisAlignment.center,
+  //               children: [
+  //                 const Text(
+  //                   "Already have an account? ",
+  //                   style: TextStyle(color: Colors.white),
+  //                 ),
+  //                 GestureDetector(
+  //                   onTap: _isLoading ? null : () {
+  //                     Navigator.push(
+  //                       context,
+  //                       MaterialPageRoute(builder: (context) => const LoginPage()),
+  //                     );
+  //                   },
+  //                   child: Text(
+  //                     'Login',
+  //                     style: TextStyle(
+  //                       color: _isLoading ? Colors.white54 : Colors.white,
+  //                       fontWeight: FontWeight.bold,
+  //                       decoration: TextDecoration.underline,
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildSignupButton(
       BuildContext context, String text, IconData icon, Color color,
