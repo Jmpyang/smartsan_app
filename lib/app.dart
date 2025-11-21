@@ -56,7 +56,7 @@ class _DashBoardPage extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      drawer: Drawer(
+      endDrawer: Drawer(
         child: ListView(
           children: <Widget>[
             ListTile(
@@ -146,8 +146,6 @@ class _DashBoardPage extends State<DashboardPage> {
                       ],
                     ),
                   ),
-                  _statCard("Active Workers", "142", "On duty today",
-                      "+12% vs last month", Icons.people, Colors.green),
                   _statCard("Active Workers", "142", "On duty today",
                       "+12% vs last month", Icons.people, Colors.green),
                   _statCard("Waste Collected", "24.5T", "This week",
