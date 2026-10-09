@@ -4,28 +4,28 @@ SmartSan is a mobile application built with *Flutter* to enhance sanitation mana
 
 -----
 
-🚀 Features
+Features
 
-    📸 Report sanitation issues with location & photos
-    📊 View live sanitation stats & impact metrics
-    👥 Role-based dashboards (Community & Admin)
-    🔔 Push notifications for updates & alerts
-    🌍 IoT & data integration for smart waste tracking
-    🧠 Clean, modern UI matching SmartSan’s web design
+    - Report sanitation issues with location & photos
+    - View live sanitation stats & impact metrics
+    - Role-based dashboards (Community & Admin)
+    - Push notifications for updates & alerts
+    - IoT & data integration for smart waste tracking
+    - Clean, modern UI matching SmartSan’s web design
 
 ----
 
-🛠️ Tech Stack
+ Tech Stack
 
-    Flutter + Dart
-    Firebase (Auth, Firestore, Storage, Messaging)
-    Google Maps API (optional for geolocation)
-    Provider / Riverpod / GetX (state management)
-    Android Studio / VS Code (development)
+   ~ Flutter + Dart
+   ~ Firebase (Auth, Firestore, Storage, Messaging)
+   ~ Google Maps API (optional for geolocation)
+   ~ Provider / Riverpod / GetX (state management)
+   ~ Android Studio / VS Code (development)
 
 ---
 
-📁 Project Structure
+ Project Structure
 
 
 lib/
@@ -61,10 +61,10 @@ Getting Started
 
 ---
 
-📌 License
+ License
 
 MIT License — feel free to use, modify, and contribute.
 
 ---
 
-Built with community impact in mind 🌱
+Built with community impact in mind.
