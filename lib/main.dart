@@ -1,15 +1,10 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:smartsan_app/app.dart';
-import 'package:smartsan_app/features/community_reporting/presentation/report_issue_view.dart';
 import 'firebase_options.dart';
 import 'package:smartsan_app/features/auth/presentation/login_view.dart';
-import 'package:smartsan_app/features/auth/presentation/signup_view.dart';
 import 'package:smartsan_app/features/auth/data/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:smartsan_app/services/firestore_service.dart'; // For IssueReport class
-import 'package:smartsan_app/services/report_service.dart';
+// For IssueReport class
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -88,6 +83,17 @@ class _HomePageState extends State<HomePage> {
                     style: TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      _buildFeatureCheck("Real-time Tracking"),
+                      _buildFeatureCheck("AI Analytics"),
+                      _buildFeatureCheck("Community Driven"),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -107,11 +113,11 @@ class _HomePageState extends State<HomePage> {
                          Navigator.push(context, MaterialPageRoute(
                              builder: (context) => LoginPage()));
                       },
-                        child: Text("Report an Issue"),
                         style: ElevatedButton.styleFrom(
                             foregroundColor: Colors.white,
                             backgroundColor: const Color(0xFF2279CF)
                         ),
+                        child: Text("Report an Issue"),
                       )
 
                     ],

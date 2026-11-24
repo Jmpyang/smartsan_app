@@ -1,9 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:smartsan_app/main.dart';
 import 'package:smartsan_app/app.dart';
-import 'package:smartsan_app/features/auth/domain/services/auth_service.dart';
-import 'package:smartsan_app/features/auth/data/models/user_model.dart';
 import 'package:smartsan_app/features/auth/presentation/signup_view.dart';
 import 'package:smartsan_app/features/auth/data/providers/auth_provider.dart';
 
@@ -32,11 +30,11 @@ class _LoginPageState extends State<LoginPage> {
       // ADDED: Get AuthService from provider and call signIn
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       await authProvider.login(_emailController.text, _passwordController.text);
-      // Navigation will be handled by AuthWrapper in main.dart
+      if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => DashBoard()),
-        (Route<dynamic> route) => false, // This removes all previous routes
+        MaterialPageRoute(builder: (context) => const DashBoard()),
+        (Route<dynamic> route) => false,
       );
     } catch (e) {
       String errorMessage = "Login failed. Please check your credentials.";
@@ -132,7 +130,7 @@ Widget build(BuildContext context) {
                       // Email TextField
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: TextField(
@@ -150,7 +148,7 @@ Widget build(BuildContext context) {
                       // Password TextField
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: TextField(
@@ -405,7 +403,7 @@ Widget build(BuildContext context) {
       child: TextButton(
         onPressed: onPressed,
         style: TextButton.styleFrom(
-          backgroundColor: Colors.white.withOpacity(0.9),
+          backgroundColor: Colors.white.withValues(alpha: 0.9),
           foregroundColor: Colors.black,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

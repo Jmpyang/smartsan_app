@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 // --- Placeholder Colors & Styles for Clean Code ---
 const Color _primaryGreen = Color(0xFF4CAF50);
@@ -16,7 +16,7 @@ const TextStyle _metricValue = TextStyle(fontSize: 28, fontWeight: FontWeight.bo
 
 
 class WorkersDashboardScreen extends StatelessWidget {
-  const WorkersDashboardScreen({Key? key}) : super(key: key);
+  const WorkersDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -147,7 +147,7 @@ class WorkersDashboardScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
+                  color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(status, style: _bodyText2.copyWith(color: statusColor)),

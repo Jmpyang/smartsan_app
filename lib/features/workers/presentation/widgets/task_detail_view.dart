@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:smartsan_app/core/constants/app_colors.dart';
 import 'package:smartsan_app/core/constants/app_text_styles.dart';
 
@@ -11,14 +11,14 @@ class TaskCard extends StatelessWidget {
   final TextStyle statusTextStyle;
 
   const TaskCard({
-    Key? key,
+    super.key,
     required this.taskType,
     required this.status,
     required this.location,
     required this.distanceTime,
     required this.statusColor,
     required this.statusTextStyle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +41,7 @@ class TaskCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(

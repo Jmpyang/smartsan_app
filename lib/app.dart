@@ -1,12 +1,10 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:smartsan_app/features/community_reporting/presentation/report_issue_view.dart';
 import 'package:smartsan_app/main.dart';
 import 'package:provider/provider.dart';
 import 'package:smartsan_app/features/auth/data/providers/auth_provider.dart';
 import 'package:smartsan_app/features/workers/presentation/screens/workers_dashboard_screen.dart';
 import 'package:smartsan_app/features/analytics/presentation/screens/analytics_screen.dart';
-import 'package:smartsan_app/features/auth/domain/services/auth_service.dart';
 
 void main(){
   runApp(const DashBoard());
@@ -120,16 +118,19 @@ class _DashBoardPage extends State<DashboardPage> {
             Navigator.pop(context);
 
             bool confirm = await showLogoutConfirmationDialog(context);
+            if (!context.mounted) return;
             final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
             if (confirm) {
-            await authProvider.logout();
-            Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const HomePage()),
-                );
-                }
+              await authProvider.logout();
+              if (!context.mounted) return;
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const HomePage()),
+                (route) => false,
+              );
+            }
   },
 ),
 
@@ -297,7 +298,7 @@ Widget _summaryItem(IconData icon, Color color, String label, String value) {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
           padding: const EdgeInsets.all(8),

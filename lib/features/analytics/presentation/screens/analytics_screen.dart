@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 // --- Placeholder Colors & Styles for Clean Code ---
 // In a real app, these would come from lib/core/constants/
@@ -18,7 +18,7 @@ const TextStyle _smallGreen = TextStyle(fontSize: 10, color: _primaryGreen, font
 
 
 class AnalyticsScreen extends StatelessWidget {
-  const AnalyticsScreen({Key? key}) : super(key: key);
+  const AnalyticsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +120,7 @@ class AnalyticsScreen extends StatelessWidget {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: const Padding(
+      child: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -146,7 +146,7 @@ class AnalyticsScreen extends StatelessWidget {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: const Padding(
+      child: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -181,7 +181,7 @@ class AnalyticsScreen extends StatelessWidget {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: const Padding(
+      child: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -251,8 +251,8 @@ class _MonthlyTrendItem extends StatelessWidget {
               const SizedBox(height: 4),
               LinearProgressIndicator(
                 value: wasteValue,
-                backgroundColor: _primaryBlue.withOpacity(0.15), // Improved blending
-                valueColor: AlwaysStoppedAnimation<Color>(_primaryBlue.withOpacity(0.8)),
+                backgroundColor: _primaryBlue.withValues(alpha: 0.15), // Improved blending
+                valueColor: AlwaysStoppedAnimation<Color>(_primaryBlue.withValues(alpha: 0.8)),
                 minHeight: 8,
                 borderRadius: BorderRadius.circular(4),
               ),
@@ -268,8 +268,8 @@ class _MonthlyTrendItem extends StatelessWidget {
               const SizedBox(height: 4),
               LinearProgressIndicator(
                 value: efficiencyValue,
-                backgroundColor: _primaryGreen.withOpacity(0.15), // Improved blending
-                valueColor: AlwaysStoppedAnimation<Color>(_primaryGreen.withOpacity(0.8)),
+                backgroundColor: _primaryGreen.withValues(alpha: 0.15), // Improved blending
+                valueColor: AlwaysStoppedAnimation<Color>(_primaryGreen.withValues(alpha: 0.8)),
                 minHeight: 8,
                 borderRadius: BorderRadius.circular(4),
               ),
@@ -322,8 +322,8 @@ class _EnvironmentalImpactItem extends StatelessWidget {
         const SizedBox(height: 8),
         LinearProgressIndicator(
           value: progress,
-          backgroundColor: Colors.grey.withOpacity(0.2), // Improved blending
-          valueColor: AlwaysStoppedAnimation<Color>(valueColor.withOpacity(0.8)),
+          backgroundColor: Colors.grey.withValues(alpha: 0.2), // Improved blending
+          valueColor: AlwaysStoppedAnimation<Color>(valueColor.withValues(alpha: 0.8)),
           minHeight: 10,
           borderRadius: BorderRadius.circular(4),
         ),
@@ -363,11 +363,11 @@ class _QuarterlyComparisonItem extends StatelessWidget {
       padding: const EdgeInsets.all(12), // Reduced padding
       decoration: highlight 
           ? BoxDecoration(
-              color: _primaryGreen.withOpacity(0.9),
+              color: _primaryGreen.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(6), // Smaller radius
               boxShadow: [
                 BoxShadow(
-                  color: _primaryGreen.withOpacity(0.3),
+                  color: _primaryGreen.withValues(alpha: 0.3),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -375,7 +375,7 @@ class _QuarterlyComparisonItem extends StatelessWidget {
             )
           : BoxDecoration(
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: Colors.grey.withOpacity(0.2)),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
             ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -456,10 +456,10 @@ class _MetricCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: changeColor.withOpacity(0.1), // Improved blending
+                    color: changeColor.withValues(alpha: 0.1), // Improved blending
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: changeColor.withOpacity(0.9), size: 18), // Slightly smaller icon
+                  child: Icon(icon, color: changeColor.withValues(alpha: 0.9), size: 18), // Slightly smaller icon
                 ),
               ],
             ),
@@ -476,7 +476,7 @@ class _MetricCard extends StatelessWidget {
               Text(
                 subText!,
                 style: _smallGreen.copyWith(
-                  color: subText!.contains('-') ? _alertRed : changeColor.withOpacity(0.9),
+                  color: subText!.contains('-') ? _alertRed : changeColor.withValues(alpha: 0.9),
                 ),
               ),
             ],

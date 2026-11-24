@@ -74,19 +74,12 @@ class ReportService {
     required String locationString,
     required double lat,
     required double lng,
-    required String reporterUid, // Ensure this is passed
+    required String reporterUid,
   }) async {
-    // Reference to the 'issueReports' collection
-    //final collectionRef = _db.collection('reports').doc();
-    const String existingDocId = 'dnOKQ2DXDib4kco9BOgc';
-    // Create a new document reference to get the ID
-    //final docRef = collectionRef.doc('dnOKQ2DXDib4kco9BOgc');
-    final docRef = _db.collection('reports').doc(existingDocId);
-
+    final docRef = _db.collection('reports').doc();
 
     final report = IssueReport(
-      //id: docRef.id,
-      id: existingDocId,
+      id: docRef.id,
       reporterUid: reporterUid,
       description: description,
       category: category,
@@ -103,7 +96,9 @@ class ReportService {
       report.toMap()..['timestamp'] = FieldValue.serverTimestamp(),
       SetOptions(merge: true),
     );
-    print('Report $existingDocId successfully updated in Firestore!');
+    if (kDebugMode) {
+      print('Report ${docRef.id} successfully updated in Firestore!');
+    }
   }
 }
 

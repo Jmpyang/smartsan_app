@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
-import 'package:smartsan_app/features/auth/domain/services/auth_service.dart';
 import 'package:smartsan_app/features/auth/data/models/user_model.dart';
 import 'package:smartsan_app/features/auth/presentation/login_view.dart';
 import 'package:smartsan_app/features/auth/data/providers/auth_provider.dart';
@@ -75,7 +74,9 @@ class _SignupPageState extends State<SignupPage> {
       } 
       _showErrorDialog(errorMessage);
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -176,7 +177,7 @@ class _SignupPageState extends State<SignupPage> {
                       // Name TextField
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: TextField(
@@ -194,7 +195,7 @@ class _SignupPageState extends State<SignupPage> {
                       // Email TextField
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: TextField(
@@ -212,7 +213,7 @@ class _SignupPageState extends State<SignupPage> {
                       // Password TextField
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: TextField(
@@ -231,7 +232,7 @@ class _SignupPageState extends State<SignupPage> {
                       // Confirm Password TextField
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: TextField(
@@ -509,7 +510,7 @@ class _SignupPageState extends State<SignupPage> {
       child: TextButton(
         onPressed: onPressed,
         style: TextButton.styleFrom(
-          backgroundColor: Colors.white.withOpacity(0.9),
+          backgroundColor: Colors.white.withValues(alpha: 0.9),
           foregroundColor: Colors.black,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
